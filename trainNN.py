@@ -20,4 +20,5 @@ val_dataset = PASCALData.VOC12Dataset(DATA_DIR, 'val', normalize=True)
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
-# sample = train_dataset[0]['image data'].permute(1,2,0).numpy()
+sample_img = train_dataset[0]['image data'].permute(1,2,0).numpy()
+sample_mask = train_dataset[0]['gt mask'].numpy()

@@ -1,3 +1,4 @@
+import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
 from PIL import Image
@@ -7,11 +8,15 @@ import numpy as np
 
 class VOC12Dataset(Dataset):
 
-    def __init__(self, data_dir, mode='train', normalize=True, data_stats_path='./datastats-trainval-480x360.txt'):
+    def __init__(self, data_dir, mode='train', normalize=True, data_stats_path='./datastats-trainval-360x240.txt'):
         super(VOC12Dataset, self).__init__()
 
         self.data_dir = data_dir
+        self.img_dir = self.data_dir + "VOC2012/JPEGImages/"
+        self.gt_mask_dir = self.data_dir + "VOC2012/SegmentationClass/"
+
         self.mode = mode # Modes: 'train', 'val', 'trainval'
+
 
         img_filenames_path = self.data_dir+"VOC2012/ImageSets/Segmentation/{}.txt".format(self.mode)
         with open(img_filenames_path, 'r') as f:
@@ -20,10 +25,13 @@ class VOC12Dataset(Dataset):
         if normalize:
             stats = np.loadtxt(data_stats_path, delimiter=',')
             mean, stddev = stats[0,:], stats[1,:]
-            self.preprocess_transform = transforms.Compose([transforms.ToTensor(),
+            self.img_preprocess_transform = transforms.Compose([transforms.ToTensor(),
                                                             transforms.Normalize(mean, stddev)])
         else:
-            self.preprocess_transform = transforms.Compose([transforms.ToTensor()])
+            self.img_preprocess_transform = transforms.Compose([transforms.ToTensor()])
+
+
+        self.resize_dims = (360, 240) # W x H -- (480,360), (360,240)
 
 
     def __len__(self):
@@ -31,11 +39,16 @@ class VOC12Dataset(Dataset):
 
 
     def __getitem__(self, idx):
-        img_path = self.data_dir + "VOC2012/JPEGImages/" + self.img_filenames[idx] + ".jpg"
-        img = Image.open(img_path).resize((480,360)) # Shape format: W x H
-        img = self.preprocess_transform(img) # Shape format: C x H x W
+        img_path = self.img_dir + self.img_filenames[idx] + ".jpg"
+        img = Image.open(img_path).resize(self.resize_dims) # Shape format: W x H
+        img = self.img_preprocess_transform(img) # Shape format: C x H x W
 
-        sample = {'image data': img} # Dict of Tensors
+        gt_mask_path = self.gt_mask_dir + self.img_filenames[idx] + ".png"
+        gt_mask = Image.open(gt_mask_path).resize(self.resize_dims)
+        gt_mask = torch.from_numpy(np.array(gt_mask))
+
+        sample = {'image data': img,
+                  'gt mask': gt_mask} # Dict of Tensors
 
         return sample
 

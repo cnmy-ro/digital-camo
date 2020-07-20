@@ -9,7 +9,7 @@ from tqdm import tqdm
 import PASCALData
 
 DATA_DIR = "./Data/"
-output_path = "./datastats-trainval-480x360.txt"
+output_path = "./datastats-trainval-360x240.txt"
 
 
 trainval_dataset = PASCALData.VOC12Dataset(DATA_DIR, mode='trainval', normalize=False)

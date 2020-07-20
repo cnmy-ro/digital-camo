@@ -7,7 +7,7 @@ import numpy as np
 
 class VOC12Dataset(Dataset):
 
-    def __init__(self, data_dir, mode='train', normalize=True, data_stats_path='./data_stats.txt'):
+    def __init__(self, data_dir, mode='train', normalize=True, data_stats_path='./datastats-trainval-480x360.txt'):
         super(VOC12Dataset, self).__init__()
 
         self.data_dir = data_dir
@@ -40,8 +40,8 @@ class VOC12Dataset(Dataset):
         return sample
 
 
+
 if __name__ == '__main__':
 
     dataset = VOC12Dataset("./Data/", "train")
-
     sample_img = dataset[0]['image data'].squeeze().permute(1,2,0).numpy()

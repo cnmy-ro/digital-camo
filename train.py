@@ -1,7 +1,13 @@
+import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
 import PASCALData, Model
+
+
+np.random.seed(0)
+torch.manual_seed(0)
+
 
 # Data config
 DATA_DIR = "./Data/"
@@ -11,7 +17,7 @@ BATCH_SIZE = 4
 train_dataset = PASCALData.VOC12Dataset(DATA_DIR, 'train', normalize=True)
 val_dataset = PASCALData.VOC12Dataset(DATA_DIR, 'val', normalize=True)
 
-train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=False)
-val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 # sample = train_dataset[0]['image data'].permute(1,2,0).numpy()

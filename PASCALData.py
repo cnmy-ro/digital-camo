@@ -8,7 +8,7 @@ import numpy as np
 
 class VOC12Dataset(Dataset):
 
-    def __init__(self, data_dir, mode='train', normalize=True, data_stats_path='./datastats-trainval-360x240.txt'):
+    def __init__(self, data_dir, mode='train', normalize=True, data_stats_path='./Data/datastats-trainval-360x240.txt'):
         super(VOC12Dataset, self).__init__()
 
         self.data_dir = data_dir
@@ -44,7 +44,10 @@ class VOC12Dataset(Dataset):
         img = self.img_preprocess_transform(img) # Shape format: C x H x W
 
         gt_mask_path = self.gt_mask_dir + self.img_filenames[idx] + ".png"
+
         gt_mask = Image.open(gt_mask_path).resize(self.resize_dims)
+        print(gt_mask.mode)
+
         gt_mask = torch.from_numpy(np.array(gt_mask))
 
         sample = {'image data': img,
@@ -53,6 +56,8 @@ class VOC12Dataset(Dataset):
         return sample
 
 
+
+###############################################################################
 
 if __name__ == '__main__':
 

@@ -5,11 +5,10 @@ import cv2
 
 filename = "./Data/VOC2012/SegmentationClass/2007_000039.png"
 
-img = Image.open(filename) # filename is the png file in question
+img = Image.open(filename).resize((320,240)) # filename is the png file in question
+palette = img.getpalette()
+img_array = np.array(img)
+img_rgb = np.array(img.convert('RGB'))
 
-img = np.array(img)
-
-print(np.array(img)[170,250])
-
-plt.imshow(np.array(img))
-plt.show()
+print(img_array[150,150])
+print(img_rgb[150,150])

@@ -1,3 +1,4 @@
-Data/*
+Data/VOC2012/*
+Data/VOCdevkit/*
 
 __pycache__

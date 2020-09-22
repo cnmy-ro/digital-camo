@@ -1,4 +1,4 @@
-# Digital Camouflage
+# Digital Camouflage System
 
 Using [instance segmentation + inpainting] to render a person "digitally invisible". 
 

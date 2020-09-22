@@ -1,6 +1,6 @@
 # Data
-Data/VOC2012/*
-Data/VOCdevkit/*
+data/VOC2012/*
+data/VOCdevkit/*
 
 
 # Pycache
@@ -8,4 +8,7 @@ __pycache__
 
 
 # Ipython notebook checkpoints
-Notebooks/.ipynb_checkpoints/*
+notebooks/.ipynb_checkpoints/*
+
+
+

@@ -1,0 +1,19 @@
+trainNN:
+
+- Add necessary features for usage in the cluster:
+    - To write results into a file
+    - To save the model
+
+- All-at-once training scheme
+
+
+
+PASCALVOC12:
+
+V Check if the images,masks are acceptable
+
+
+
+Model:
+
+- Regularization

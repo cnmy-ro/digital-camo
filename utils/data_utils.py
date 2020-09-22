@@ -1,4 +1,4 @@
-
+import torch
 
 def get_label_names():
     '''
@@ -17,6 +17,31 @@ def get_label_names():
     return label_mapping
 
 
-def get_color_palette(label_mask):
-    rgb_mask = label_mask.convert('RGB')
-    return rgb_mask
+def label2rgb(label_mask_pil):
+    rgb_mask_pil = label_mask_pil.convert('RGB')
+    return rgb_mask_pil
+
+
+def label2onehot(label_batch_tensor):
+    n_classes = 21
+    batch_size = label_batch_tensor.shape[0]
+    
+    oh_label_batch = torch.zeros((batch_size, label_batch_tensor.shape[1], label_batch_tensor.shape[2], n_classes)).int()
+    
+    for c in range(n_classes):
+        oh_label_batch[:,:,:,c][label_batch == c] = 1
+    oh_label_batch = oh_label_batch.permute((0,3,1,2))
+    
+    return oh_label_batch
+
+
+def normalize_intensities(image_batch_tensor, normalization='min-max'):
+    if normalization == 'min-max':
+        image_batch_tensor = image_batch_tensor / 255
+    
+    if normalization == 'z-score':
+        batch_mean = torch.mean(image_batch_tensor) # Single mean value over the entire batch and all channels
+        batch_stddev = torch.std(image_batch_tensor)
+        image_batch_tensor = (image_batch_tensor - batch_mean) / batch_stddev
+    
+    return image_batch_tensor

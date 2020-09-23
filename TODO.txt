@@ -1,8 +1,10 @@
 trainNN:
 
 - Add necessary features for usage in the cluster:
-    - To write results into a file
+    x To write results into a file
     - To save the model
+
+- Multi-GPU training
 
 - All-at-once training scheme
 
@@ -10,7 +12,7 @@ trainNN:
 
 PASCALVOC12:
 
-V Check if the images,masks are acceptable
+x Check if the images,masks are acceptable
 
 
 

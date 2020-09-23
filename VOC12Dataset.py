@@ -25,7 +25,7 @@ class VOC12Dataset(Dataset):
 
         self.mode = mode 
 
-        img_filenames_path = self.data_dir+"VOC2012/ImageSets/Segmentation/{}.txt".format(self.mode)
+        img_filenames_path = self.data_dir + '/' + "VOC2012/ImageSets/Segmentation/{}.txt".format(self.mode)
         with open(img_filenames_path, 'r') as f:
             self.img_filenames = sorted(f.read().split('\n'))
 
@@ -40,16 +40,14 @@ class VOC12Dataset(Dataset):
 
     def __getitem__(self, idx):
         img_path = self.img_dir + '/' + self.img_filenames[idx] + ".jpg"
-        img = Image.open(img_path).resize(self.resize_dims, resample=Image.BILINEAR) # Shape format: W x H X C
-        img = self.to_tensor(img)  # Transform PIL image of shape (W,H,C) to Tensor of shape (C,H,W)
+        img = Image.open(img_path).resize(self.resize_dims, resample=Image.BILINEAR)
+        img = torch.from_numpy(np.array(img)) # Transform PIL image of shape (H,W,C) to Tensor of shape (C,H,W)
+        img = img.permute((2,0,1))            #
 
         gt_mask_path = self.gt_mask_dir + '/' + self.img_filenames[idx] + ".png"
-
         gt_mask = Image.open(gt_mask_path).resize(self.resize_dims, resample=Image.NEAREST)
         # print(gt_mask.mode)  # Mode is 'P' 
-
-        gt_mask = torch.from_numpy(np.array(gt_mask))
-
+        gt_mask = torch.from_numpy(np.array(gt_mask)) # Shape: (H,W)
         gt_mask[gt_mask == 255] = 0 # Turn the "NULL" pixel label (255) to Background (0)
 
         # Create the dict of Tensors
@@ -64,5 +62,5 @@ class VOC12Dataset(Dataset):
 
 if __name__ == '__main__':
 
-    dataset = VOC12Dataset("./data/", "train")
+    dataset = VOC12Dataset("./data", "train")
     sample_img = dataset[0]['image data'].squeeze().permute(1,2,0).numpy()

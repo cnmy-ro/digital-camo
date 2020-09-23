@@ -159,7 +159,7 @@ if __name__ == '__main__':
 	model = FCN_VGG16(mode='3-stream')
 	softmax_fn = nn.Softmax(dim=1)
 
-	X = torch.rand((1,3,256,320))  # Random image
+	X = torch.rand((1,3,256,320))  # Random pixel image
 	out_32s, out_16s, out_8s = model.forward(X)
 
 	out_32s = softmax_fn(out_32s)

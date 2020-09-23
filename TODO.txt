@@ -2,9 +2,21 @@ trainNN:
 
 - Add necessary features for usage in the cluster:
     x To write results into a file
-    - To save the model
+    x To save the model
+    - To load the model 
+    - Proper checkpointing - including the metrics
+    - WandB integration for better metric logging
 
-- Multi-GPU training
+- Metrics to log:
+    - Loss
+    - Dice
+    - IoU (Jaccard)
+    - Precision, recall
+
+- (Multi) GPU training
+    x Fix potential memory leak
+
+- Replace print with logging
 
 - All-at-once training scheme
 

@@ -26,7 +26,7 @@ TRAINING_CONFIG = {'epochs': 100,
                    }
 
 
-MODEL_SAVE_DIR = "./model_checkpoints"
+CHECKPOINT_DIR = "./model_checkpoints"
 OUTPUT_DIR = "./results"
 
 
@@ -86,7 +86,7 @@ def main():
 
         for train_batch in tqdm(train_loader):
             input_batch = train_batch['image data'].cuda()  # Shape: (batch_size, 3, H, W)
-            label_batch = train_batch['gt mask'].long().cuda() # Shape: (batch_size, H, W)  ? Shouldn't this be (B,1,H,W) ?
+            label_batch = train_batch['gt mask'].long().cuda() # Shape: (batch_size, H, W)  
             
             # Normalize input images over the batch
             input_batch = utils.data_utils.normalize_intensities(input_batch, normalization='min-max')
@@ -109,6 +109,10 @@ def main():
         epoch_train_loss_list.append(epoch_train_loss)
         print("Train loss:", epoch_train_loss)
 
+        
+        # Clear CUDA cache
+        torch.cuda.empty_cache()
+
 
         # Validate --
         print("Validating ...")
@@ -126,7 +130,8 @@ def main():
             input_batch = utils.data_utils.normalize_intensities(input_batch, normalization='min-max')
 
             # Forward pass
-            pred_batch = fcn_model(input_batch)
+            with torch.no_grad():  # Disable autograd engine
+                pred_batch = fcn_model(input_batch)
 
             # Compute validation loss
             val_loss = cross_entropy_fn(pred_batch, label_batch)
@@ -134,20 +139,21 @@ def main():
 
             batch_counter += 1
 
+        # Clear CUDA cache
+        torch.cuda.empty_cache()
+
         epoch_val_loss /= len(val_loader)
         epoch_val_loss_list.append(val_loss)
         print("Validation loss:", epoch_val_loss)
 
         if e%10 == 0:  # Checkpoint every 10 epochs
-            torch.save(fcn_model.state_dict(), f"{OUTPUT_DIR}/fcnvgg16_{e}.pt")
+            torch.save(fcn_model.state_dict(), f"{CHECKPOINT_DIR}/fcnvgg16_{e}.pt")
 
 
     # Write losses into a file
     np.savetxt(f"{OUTPUT_DIR}/training_losses.csv", np.array(epoch_train_loss_list))
     np.savetxt(f"{OUTPUT_DIR}/validation_losses.csv", np.array(epoch_val_loss_list))
 
-    # Clear CUDA cache
-    torch.cuda.empty_cache()
 
 
 

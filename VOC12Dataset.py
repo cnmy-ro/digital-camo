@@ -20,18 +20,16 @@ class VOC12Dataset(Dataset):
         super(VOC12Dataset, self).__init__()
 
         self.data_dir = data_dir
-        self.img_dir = self.data_dir + '/' + "VOC2012/JPEGImages"
-        self.gt_mask_dir = self.data_dir + '/' + "VOC2012/SegmentationClass"
+        self.img_dir = f"{self.data_dir}/VOC2012/JPEGImages"
+        self.gt_mask_dir = f"{self.data_dir}/VOC2012/SegmentationClass"
 
         self.mode = mode 
 
-        img_filenames_path = self.data_dir + '/' + "VOC2012/ImageSets/Segmentation/{}.txt".format(self.mode)
+        img_filenames_path = f"{self.data_dir}/VOC2012/ImageSets/Segmentation/{self.mode}.txt"  # Depending on the mode, the path will change
         with open(img_filenames_path, 'r') as f:
             self.img_filenames = sorted(f.read().split('\n'))
 
-        self.to_tensor = transforms.Compose([transforms.ToTensor()])
-
-        self.resize_dims = (320,256) # W x H -- (480,360), (360,240)
+        self.resize_dims = (320,256) # W x H  (for PIL)
 
 
     def __len__(self):

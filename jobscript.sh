@@ -15,6 +15,9 @@
 
 #SBATCH --time=01:00:00
 
+## TO use the UM DKE project account
+## #SBATCH --account=um_dke
+
 
 # Load CUDA 
 module load cuda
@@ -22,7 +25,7 @@ module load cuda
 # Debug info
 echo; echo
 nvidia-smi
-echo
+echo; echo
 
 # Execute script
 python_interpreter="../maastro_env/bin/python3"

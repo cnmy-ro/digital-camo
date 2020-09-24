@@ -1,4 +1,5 @@
 import torch
+from sklearn.metrics import jaccard_score as jsc
 
 def get_label_names():
     '''
@@ -45,3 +46,10 @@ def normalize_intensities(image_batch_tensor, normalization='min-max'):
         image_batch_tensor = (image_batch_tensor.float() - batch_mean) / batch_stddev
     
     return image_batch_tensor
+
+
+def iou_from_tensors(pred_batch_tensor, label_batch_tensor):  # Pred - (bs,21,h,w) ; label - (bs,h,w)
+    pred_label_batch = pred_batch_tensor.argmax(dim=1).cpu().numpy().reshape(-1)
+    label_batch = label_batch_tensor.cpu().numpy().reshape(-1)
+    iou = jsc(pred_label_batch, label_batch, average='macro')
+    return iou

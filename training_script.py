@@ -18,11 +18,11 @@ torch.manual_seed(0)
 
 # Config
 DATA_CONFIG = { 'data dir' : "./data",
-                'batch size' : 32
+                'batch size' : 64
               }
 
 TRAINING_CONFIG = {'epochs': 100,
-                   'learning rate': 0.001
+                   'learning rate': 0.01
                    }
 
 
@@ -71,8 +71,12 @@ def main():
     # Training loop ----------------------------------------------------------
     batch_size = DATA_CONFIG['batch size']
     n_classes = 21
+
     epoch_train_loss_list = []
+    epoch_train_iou_list = []
+    
     epoch_val_loss_list = []
+    epoch_val_iou_list = []
 
     for e in range(1, TRAINING_CONFIG['epochs']+1):
         print("\nStarting epoch:", e,)
@@ -106,6 +110,10 @@ def main():
         epoch_train_loss /= len(train_loader)
         epoch_train_loss_list.append(epoch_train_loss)
         print("Train loss:", epoch_train_loss)
+
+        train_iou_score = utils.data_utils.iou_from_tensors(pred_batch, label_batch)
+        epoch_train_iou_list.append(train_iou_score)
+        print("Training IoU:", train_iou_score)
 
 
         # Clear CUDA cache
@@ -142,14 +150,19 @@ def main():
         epoch_val_loss_list.append(val_loss)
         print("Validation loss:", epoch_val_loss)
 
+        val_iou_score = utils.data_utils.iou_from_tensors(pred_batch, label_batch)
+        epoch_val_iou_list.append(val_iou_score)
+        print("Validation IoU:", val_iou_score)
+
         if e%10 == 0:  # Checkpoint every 10 epochs
-            torch.save(fcn_model.state_dict(), f"{CHECKPOINT_DIR}/fcnvgg16_{e}.pt")
+            torch.save(fcn_model.state_dict(), f"{CHECKPOINT_DIR}/fcnvgg16_ep{e}_iou{val_iou_score:.2f}.pt")
 
-
-    # Write losses into a file
+    # Write metrics into files
     np.savetxt(f"{OUTPUT_DIR}/training_losses.csv", np.array(epoch_train_loss_list))
     np.savetxt(f"{OUTPUT_DIR}/validation_losses.csv", np.array(epoch_val_loss_list))
 
+    np.savetxt(f"{OUTPUT_DIR}/training_iou.csv", np.array(epoch_train_iou_list))
+    np.savetxt(f"{OUTPUT_DIR}/validation_iou.csv", np.array(epoch_val_iou_list))
 
 
 

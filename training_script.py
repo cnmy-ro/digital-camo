@@ -16,7 +16,7 @@ import utils.data_utils
 np.random.seed(0)
 torch.manual_seed(0)
 
-# Config 
+# Config
 DATA_CONFIG = { 'data dir' : "./data",
                 'batch size' : 32
               }
@@ -64,7 +64,7 @@ def main():
 
     cross_entropy_fn = torch.nn.CrossEntropyLoss(reduction='mean') # 2-dimensional CE loss
 
-    optimizer = torch.optim.SGD(fcn_model.parameters(), 
+    optimizer = torch.optim.SGD(fcn_model.parameters(),
                                 lr = TRAINING_CONFIG['learning rate'])
 
 
@@ -79,52 +79,49 @@ def main():
 
         # One pass over the training set
         print("Training ...")
-        batch_counter = 0
         epoch_train_loss = 0
 
         fcn_model.train() # Set model in train mode
 
         for train_batch in tqdm(train_loader):
             input_batch = train_batch['image data'].cuda()  # Shape: (batch_size, 3, H, W)
-            label_batch = train_batch['gt mask'].long().cuda() # Shape: (batch_size, H, W)  
-            
+            label_batch = train_batch['gt mask'].long().cuda() # Shape: (batch_size, H, W)
+
             # Normalize input images over the batch
             input_batch = utils.data_utils.normalize_intensities(input_batch, normalization='min-max')
 
             # Forward pass
             optimizer.zero_grad() # Clear any previous gradients
             pred_batch = fcn_model(input_batch)
-            
+
             # Compute training loss
             train_loss = cross_entropy_fn(pred_batch, label_batch)
-            epoch_train_loss += train_loss.item() 
-            
+            epoch_train_loss += train_loss.item()
+
             # Back-propagation
-            train_loss.backward()  # Compute gradients  
+            train_loss.backward()  # Compute gradients
             optimizer.step() # Update model parameters
 
-            batch_counter += 1
 
         epoch_train_loss /= len(train_loader)
         epoch_train_loss_list.append(epoch_train_loss)
         print("Train loss:", epoch_train_loss)
 
-        
+
         # Clear CUDA cache
         torch.cuda.empty_cache()
 
 
         # Validate --
         print("Validating ...")
-        batch_counter = 0
         epoch_val_loss = 0
-        
+
         optimizer.zero_grad() # Clear any previous gradients
         fcn_model.eval() # Set model in eval mode
 
         for val_batch in tqdm(val_loader):
-            input_batch = train_batch['image data'].cuda() # Shape: (batch_size, 3, H, W)
-            label_batch = train_batch['gt mask'].long().cuda() # Shape: (batch_size, H, W)
+            input_batch = val_batch['image data'].cuda() # Shape: (batch_size, 3, H, W)
+            label_batch = val_batch['gt mask'].long().cuda() # Shape: (batch_size, H, W)
 
             # Normalize input images over the batch
             input_batch = utils.data_utils.normalize_intensities(input_batch, normalization='min-max')
@@ -137,7 +134,6 @@ def main():
             val_loss = cross_entropy_fn(pred_batch, label_batch)
             epoch_val_loss += val_loss.item()
 
-            batch_counter += 1
 
         # Clear CUDA cache
         torch.cuda.empty_cache()

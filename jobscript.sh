@@ -3,8 +3,8 @@
 
 # Job configuration ---
 
-#SBATCH --job-name=fcn_configxx
-#SBATCH --output=results/configxx.%j.log
+#SBATCH --job-name=fcn_configxxxx
+#SBATCH --output=results/job.%j.log
 
 ## OpenMP settings
 #SBATCH --cpus-per-task=8
@@ -27,7 +27,7 @@ echo
 # Execute script
 python_interpreter="../maastro_env/bin/python3"
 
-$python_interpreter trainNN.py
+$python_interpreter training_script.py
 
 
 

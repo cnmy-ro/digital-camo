@@ -46,7 +46,6 @@ for val_batch in tqdm(val_loader):
     sample_count += 1
 
     pred_mask = pred.argmax(dim=1).squeeze().numpy()
-    #print(pred_mask.shape)
     plt.imshow(pred_mask)
     plt.show()
     break

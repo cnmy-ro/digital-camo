@@ -1,29 +1,30 @@
-FCNVGG16FullOutput model:
-- Make it full scale VGG
+- Implement binary segmentation
+    - Adapt the full-output model to perform binary segmentation
+    - Write the dataset class for this problem
 
 
-
-training_script:
 - Add necessary features for usage in the cluster:
-    x To write results into a file
-    x To save the model
-    - To load the model 
-    - Proper checkpointing - including the metrics
+    x To write results into a file 
+    x Checkpointing
     - WandB integration for better metric logging
-- Metrics to log:
-    - Loss
+
+
+- Define metrics to log:
+    x Loss
     - Dice
-    - IoU (Jaccard)
+    x IoU (Jaccard)
     - Precision, recall
+
+
 - (Multi) GPU training
     x Fix potential memory leak
+
+
 - Replace print with logging
-- All-at-once training scheme
 
 
-PASCALVOC12:
-x Check if the images,masks are acceptable
+- Implement All-at-once training scheme from the FCN paper
 
 
-Model:
-- Regularization
+- Improvement of the model
+    - Implement and test regularization techniques

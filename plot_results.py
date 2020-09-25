@@ -16,7 +16,7 @@ val_iou = np.loadtxt(val_iou_file, delimiter=',')
 
 fig = plt.figure()
 
-ax_loss = fig.subpadd_subplotlot()
+ax_loss = fig.add_subplot()
 ax_loss.plot(np.arange(1, train_losses.shape[0]+1), train_losses, 'r-', label='Train loss')
 ax_loss.plot(np.arange(1, val_losses.shape[0]+1), val_losses, 'b-', label='Val loss')
 
@@ -24,4 +24,5 @@ ax_iou = ax_loss.twinx()
 ax_iou.plot(np.arange(1, train_iou.shape[0]+1), train_iou, 'm-', label='Train IoU')
 ax_iou.plot(np.arange(1, val_iou.shape[0]+1), val_iou, 'c-', label='Val IoU')
 
+fig.legend()
 plt.show()

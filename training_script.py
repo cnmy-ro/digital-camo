@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from VOC12Dataset import VOC12Dataset
+from FCNVGG16FullOutput import FCNVGG16FullOutput
 from Model import FCN_VGG16
 
 import utils.data_utils
@@ -58,7 +58,7 @@ def main():
 
 
     # Initialize the model ---------------------------------------------------------
-    fcn_model = FCN_VGG16(mode='fcn-32s').cuda()
+    fcn_model = FCNVGG16FullOutput(mode='fcn-32s').cuda()
     param_list = [p.numel() for p in fcn_model.parameters() if p.requires_grad == True]
     print("Trainable parameters:", param_list)
 
@@ -74,7 +74,7 @@ def main():
 
     epoch_train_loss_list = []
     epoch_train_iou_list = []
-    
+
     epoch_val_loss_list = []
     epoch_val_iou_list = []
 
@@ -137,9 +137,9 @@ def main():
             # Forward pass
             with torch.no_grad():  # Disable autograd engine
                 pred_batch = fcn_model(input_batch)
+                # Compute validation loss
+                val_loss = cross_entropy_fn(pred_batch, label_batch)
 
-            # Compute validation loss
-            val_loss = cross_entropy_fn(pred_batch, label_batch)
             epoch_val_loss += val_loss.item()
 
 

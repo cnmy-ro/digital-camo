@@ -2,9 +2,10 @@ import torch
 import torch.nn as nn
 
 
-class FCN_VGG16(nn.Module):
+class FCNVGG16Humans(nn.Module):
 	"""
 	Simplified version of FCN-VGG16 with less parameters
+	- For binary semantic segmentation of the 'Person' category only
 	"""
 	def __init__(self, mode='FCN-32s'):
 		'''

@@ -4,18 +4,18 @@ from torchvision import transforms
 from PIL import Image
 import numpy as np
 
-'''
-
+"""
 Class to represent the complete semantic segmentation dataset from PASCAL VOC12
 
-'''
+"""
 
 class VOC12Dataset(Dataset):
 
-    def __init__(self, data_dir, mode='train'):
-        '''
+    def __init__(self, data_dir, mode='train', seg_classes='all'):
+        """
         - mode options: 'train', 'val', 'trainval'
-        '''
+        - seg_clases options: 'all', 'humans only' 
+        """
         
         super(VOC12Dataset, self).__init__()
 

@@ -3,8 +3,8 @@
 
 # Job configuration ---
 
-#SBATCH --job-name=trainconfigx
-#SBATCH --output=results/configx.%j.log
+#SBATCH --job-name=train_pSS
+#SBATCH --output=results/personseg_test.%j.log
 
 ## OpenMP settings
 #SBATCH --cpus-per-task=8
@@ -30,7 +30,7 @@ echo; echo
 # Execute script
 python_interpreter="../../maastro_env/bin/python3"
 
-$python_interpreter training_script.py
+$python_interpreter train_person_seg.py
 
 
 

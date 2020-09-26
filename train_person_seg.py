@@ -12,6 +12,23 @@ from models.FCNVGG16Binary import FCNVGG16Binary
 import utils.preprocessing as preprocessing
 import utils.metrics as metrics
 
+# Random seeds
+np.random.seed(0)
+torch.manual_seed(0)
+
+
+# Config
+DATA_CONFIG = { 'data dir' : "../../Datasets/PASCAL_VOC12_SS_Person",
+                'batch size' : 32
+              }
+
+TRAINING_CONFIG = {'epochs': 200,
+                   'learning rate': 0.005
+                   }
+
+CHECKPOINT_DIR = "./model_checkpoints"
+OUTPUT_DIR = "./results"
+
 
 # Logging stuff
 def get_logger(display_time=False):
@@ -34,24 +51,6 @@ def get_logger(display_time=False):
     return logger
 
 
-# Random seeds
-np.random.seed(0)
-torch.manual_seed(0)
-
-
-# Config
-DATA_CONFIG = { 'data dir' : "../../Datasets/PASCAL_VOC12_SS_Person",
-                'batch size' : 32
-              }
-
-TRAINING_CONFIG = {'epochs': 100,
-                   'learning rate': 0.01
-                   }
-
-CHECKPOINT_DIR = "./model_checkpoints"
-OUTPUT_DIR = "./results"
-
-
 def main():
     logger = get_logger()
 
@@ -61,13 +60,13 @@ def main():
     current_device = torch.cuda.current_device()
     gpu0_name = torch.cuda.get_device_name(0)
 
-    logger.debug("\n")
+    logger.debug("")
     logger.debug("GPU info --")
     logger.debug(f"Is available: {is_available}")
     logger.debug(f"Total CUDA devices: {n_devices}")
     logger.debug(f"Current device: {current_device}")
     logger.debug(f"GPU 0 name: {gpu0_name}")
-    logger.debug("\n")
+    logger.debug("")
 
     # Create the datasets and data loaders ----------------------------------------
     train_dataset = VOC12DatasetSSPerson(DATA_CONFIG['data dir'], 'train')
@@ -82,17 +81,15 @@ def main():
     param_list = [p.numel() for p in fcn_model.parameters() if p.requires_grad == True]
     logger.debug(f"Parameters: {param_list}")
     logger.debug(f"Total parameters: {sum(param_list)}")
-    logger.debug("\n")
 
     cross_entropy_fn = torch.nn.CrossEntropyLoss(reduction='mean') # 2-dimensional CE loss
 
-    optimizer = torch.optim.SGD(fcn_model.parameters(),
-                                lr = TRAINING_CONFIG['learning rate'])
+    optimizer = torch.optim.Adam(fcn_model.parameters(),
+                                 lr = TRAINING_CONFIG['learning rate'])
 
 
     # Training loop ----------------------------------------------------------
     batch_size = DATA_CONFIG['batch size']
-    n_classes = 2
 
     epoch_train_loss_list = []
     epoch_train_iou_list = []
@@ -101,6 +98,7 @@ def main():
     epoch_val_iou_list = []
 
     for e in range(1, TRAINING_CONFIG['epochs']+1):
+        logger.debug("")
         logger.debug(f"Starting epoch:{e}")
 
         # One pass over the training set

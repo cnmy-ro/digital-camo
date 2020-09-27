@@ -23,7 +23,7 @@ DATA_CONFIG = { 'data dir' : "../../Datasets/PASCAL_VOC12_SS_Person",
               }
 
 TRAINING_CONFIG = {'epochs': 200,
-                   'learning rate': 0.005
+                   'learning rate': 0.01
                    }
 
 CHECKPOINT_DIR = "./model_checkpoints"
@@ -43,7 +43,7 @@ def get_logger(display_time=False):
     if display_time:
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     else:
-        formatter = logging.Formatter('%(name)s:%(levelname)s:%(message)s')
+        formatter = logging.Formatter('%(name)s-%(levelname)s-%(message)s')
     console_handler.setFormatter(formatter)
 
     logger.addHandler(console_handler)
@@ -68,7 +68,9 @@ def main():
     logger.debug(f"GPU 0 name: {gpu0_name}")
     logger.debug("")
 
-    # Create the datasets and data loaders ----------------------------------------
+
+    # ---------------------------------------------------------
+    # Create the datasets and data loaders 
     train_dataset = VOC12DatasetSSPerson(DATA_CONFIG['data dir'], 'train')
     val_dataset = VOC12DatasetSSPerson(DATA_CONFIG['data dir'], 'val')
 
@@ -76,19 +78,31 @@ def main():
     val_loader = DataLoader(val_dataset, batch_size=DATA_CONFIG['batch size'], shuffle=True)
 
 
-    # Initialize the model ---------------------------------------------------------
+    # ---------------------------------------------------------    
+    # Initialize the model 
     fcn_model = FCNVGG16Binary(mode='fcn-32s').cuda()
     param_list = [p.numel() for p in fcn_model.parameters() if p.requires_grad == True]
     logger.debug(f"Parameters: {param_list}")
     logger.debug(f"Total parameters: {sum(param_list)}")
 
-    cross_entropy_fn = torch.nn.CrossEntropyLoss(reduction='mean') # 2-dimensional CE loss
-
+    # Define the loss function
+    total_person_class_pixels = 7902745
+    total_nonperson_class_pixels = 40184295
+    total_pixels = total_person_class_pixels + total_nonperson_class_pixels
+    ce_loss_weights = torch.Tensor( (1 - total_nonperson_class_pixels/total_pixels,
+                                     1 - total_person_class_pixels/total_pixels) 
+                                  ).cuda()
+    cross_entropy_fn = torch.nn.CrossEntropyLoss(weight = ce_loss_weights,
+                                                 reduction = 'mean') # 2-dimensional CE loss
+    
+    # Define the optimizer
     optimizer = torch.optim.Adam(fcn_model.parameters(),
                                  lr = TRAINING_CONFIG['learning rate'])
 
 
-    # Training loop ----------------------------------------------------------
+    # ---------------------------------------------------------
+    # Training loop 
+
     batch_size = DATA_CONFIG['batch size']
 
     epoch_train_loss_list = []
@@ -99,11 +113,12 @@ def main():
 
     for e in range(1, TRAINING_CONFIG['epochs']+1):
         logger.debug("")
-        logger.debug(f"Starting epoch:{e}")
+        logger.debug(f"Epoch: {e}")
 
-        # One pass over the training set
+        # One pass over the training set --
         logger.debug("Training ...")
         epoch_train_loss = 0
+        epoch_train_iou = 0
 
         fcn_model.train() # Set model in train mode
 
@@ -118,9 +133,13 @@ def main():
             optimizer.zero_grad() # Clear any previous gradients
             pred_batch = fcn_model(input_batch)
 
-            # Compute training loss
+            # Compute training loss and other metrics
             train_loss = cross_entropy_fn(pred_batch, label_batch)
             epoch_train_loss += train_loss.item()
+            
+            with torch.no_grad():
+                train_iou = metrics.iou_from_tensors(pred_batch, label_batch)
+                epoch_train_iou += train_iou
 
             # Back-propagation
             train_loss.backward()  # Compute gradients
@@ -131,9 +150,9 @@ def main():
         epoch_train_loss_list.append(epoch_train_loss)
         logger.debug(f"Train loss: {epoch_train_loss}")
 
-        train_iou_score = metrics.iou_from_tensors(pred_batch, label_batch)
-        epoch_train_iou_list.append(train_iou_score)
-        logger.debug(f"Training IoU: {train_iou_score}")
+        epoch_train_iou /= len(train_loader)
+        epoch_train_iou_list.append(epoch_train_iou)
+        logger.debug(f"Training IoU: {epoch_train_iou}")
 
 
         # Clear CUDA cache
@@ -143,6 +162,7 @@ def main():
         # Validate --
         logger.debug("Validating ...")
         epoch_val_loss = 0
+        epoch_val_iou = 0
 
         optimizer.zero_grad() # Clear any previous gradients
         fcn_model.eval() # Set model in eval mode
@@ -157,8 +177,14 @@ def main():
             # Forward pass
             with torch.no_grad():  # Disable autograd engine
                 pred_batch = fcn_model(input_batch)
+                print("Label mask unique counts: ", np.unique(label_batch.cpu().numpy(), return_counts=True))
+                print("Pred mask unique counts: ", np.unique(pred_batch.argmax(1).cpu().numpy(), return_counts=True))
+
                 # Compute validation loss
                 val_loss = cross_entropy_fn(pred_batch, label_batch)
+                
+                val_iou = metrics.iou_from_tensors(pred_batch, label_batch)
+                epoch_val_iou += val_iou
 
             epoch_val_loss += val_loss.item()
 
@@ -170,12 +196,12 @@ def main():
         epoch_val_loss_list.append(val_loss)
         logger.debug(f"Validation loss: {epoch_val_loss}")
 
-        val_iou_score = metrics.iou_from_tensors(pred_batch, label_batch)
-        epoch_val_iou_list.append(val_iou_score)
-        logger.debug(f"Validation IoU: {val_iou_score}")
+        epoch_val_iou /= len(val_loader)
+        epoch_val_iou_list.append(epoch_val_iou)
+        logger.debug(f"Validation IoU: {epoch_val_iou}")
 
-        if e % 25 == 0:  # Checkpoint every 25 epochs
-            torch.save(fcn_model.state_dict(), f"{CHECKPOINT_DIR}/fcnvgg16_ep{e}_iou{round(val_iou_score*100)}.pt")
+        if e % 50 == 0:  # Checkpoint every 25 epochs
+            torch.save(fcn_model.state_dict(), f"{CHECKPOINT_DIR}/fcnvgg16_ep{e}_iou{round(epoch_val_iou*100)}.pt")
 
     # Write metrics into files
     np.savetxt(f"{OUTPUT_DIR}/training_losses.csv", np.array(epoch_train_loss_list))

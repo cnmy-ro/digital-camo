@@ -60,18 +60,23 @@ def main():
     val_loader = DataLoader(val_dataset, batch_size=DATA_CONFIG['batch size'], shuffle=True)
 
 
-    # Initialize the model ---------------------------------------------------------
+    # -----------------------------------------------------------
+    # Initialize the model 
     fcn_model = FCNVGG16Full(mode='fcn-32s').cuda()
     param_list = [p.numel() for p in fcn_model.parameters() if p.requires_grad == True]
     print(f"Trainable parameters: {param_list}")
 
-    cross_entropy_fn = torch.nn.CrossEntropyLoss(reduction='mean') # 2-dimensional CE loss
+    # Define loss
+    cross_entropy_fn = torch.nn.CrossEntropyLoss(reduction = 'mean') # 2-dimensional CE loss
 
+    # Define optimizer
     optimizer = torch.optim.SGD(fcn_model.parameters(),
                                 lr = TRAINING_CONFIG['learning rate'])
 
 
-    # Training loop ----------------------------------------------------------
+    # -----------------------------------------------------------
+    # Training loop 
+
     batch_size = DATA_CONFIG['batch size']
     n_classes = 21
 
@@ -84,7 +89,7 @@ def main():
     for e in range(1, TRAINING_CONFIG['epochs']+1):
         print(f"\nStarting epoch:{e}")
 
-        # One pass over the training set
+        # One pass over the training set -- 
         print("Training ...")
         epoch_train_loss = 0
 
@@ -157,7 +162,7 @@ def main():
         epoch_val_iou_list.append(val_iou_score)
         print(f"Validation IoU: {val_iou_score}")
 
-        if e % 25 == 0:  # Checkpoint every 10 epochs
+        if e % 50 == 0:  # Checkpoint every 50 epochs
             torch.save(fcn_model.state_dict(), f"{CHECKPOINT_DIR}/fcnvgg16_ep{e}_iou{round(val_iou_score*100)}.pt")
 
     # Write metrics into files

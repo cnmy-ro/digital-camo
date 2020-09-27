@@ -15,7 +15,7 @@ class VOC12DatasetSSPerson(Dataset):
 
     def __init__(self, data_dir, mode='train'):
         """
-        - mode options: 'train', 'val'
+        - mode options: 'train', 'val', 'trainval'
         """
         self.data_dir = data_dir
         self.img_dir = f"{self.data_dir}/Images"
@@ -24,31 +24,35 @@ class VOC12DatasetSSPerson(Dataset):
         self.mode = mode
         self.person_label = 15
 
-        self.img_filenames = sorted(os.listdir(self.img_dir))
-        self.img_filenames = [filename.split(".")[0] for filename in self.img_filenames]
-        random.shuffle(self.img_filenames) # Shuffle
+        trainval_img_filenames = sorted(os.listdir(self.img_dir))
+        trainval_img_filenames = [filename.split(".")[0] for filename in trainval_img_filenames]
+        random.shuffle(trainval_img_filenames) # Shuffle
         # Split
-        split_idx = round( len(self.img_filenames) * 0.8 )    
-        self.train_img_filenames = self.img_filenames[:split_idx]
-        self.val_img_filenames = self.img_filenames[split_idx:]
+        split_idx = round( len(trainval_img_filenames) * 0.8 )    
+        train_img_filenames = trainval_img_filenames[:split_idx]
+        val_img_filenames = trainval_img_filenames[split_idx:]
+
+        if self.mode == 'train':
+            self.relevant_img_filenames = train_img_filenames
+        elif self.mode == 'val':
+            self.relevant_img_filenames = val_img_filenames
+        elif self.mode == 'trainval':
+            self.relevant_img_filenames = trainval_img_filenames
 
         self.resize_dims = (320,256) # W x H  (for PIL)
 
 
     def __len__(self):
-        if self.mode == 'train':
-            return len(self.train_img_filenames)
-        elif self.mode == 'val':
-            return len(self.val_img_filenames)
+        return len(self.relevant_img_filenames)
 
 
     def __getitem__(self, idx):
-        img_path = f"{self.img_dir}/{self.img_filenames[idx]}.jpg"
+        img_path = f"{self.img_dir}/{self.relevant_img_filenames[idx]}.jpg"
         img = Image.open(img_path).resize(self.resize_dims, resample=Image.BILINEAR)
         img = torch.from_numpy(np.array(img)) # Transform PIL image of shape (H,W,C) to Tensor of shape (C,H,W)
         img = img.permute((2,0,1))            #
 
-        labelmask_path = f"{self.labelmask_dir}/{self.img_filenames[idx]}.png"
+        labelmask_path = f"{self.labelmask_dir}/{self.relevant_img_filenames[idx]}.png"
         labelmask = Image.open(labelmask_path).resize(self.resize_dims, resample=Image.NEAREST)
         # print(labelmask.mode)  # Mode is 'P' 
         labelmask = torch.from_numpy(np.array(labelmask)) # Shape: (H,W)
@@ -65,7 +69,8 @@ class VOC12DatasetSSPerson(Dataset):
 
 if __name__ == '__main__':
 
-    dataset = VOC12DatasetSSPerson("../../Datasets/PASCAL_VOC12_SS_Person", "train")
+    dataset = VOC12DatasetSSPerson("../../Datasets/PASCAL_VOC12_SS_Person", "trainval")
+    print("No. of samples:", len(dataset))
     sample_img = dataset[0]['image data'].squeeze().permute(1,2,0).numpy()
     sample_labelmask = dataset[0]['label mask'].squeeze().numpy()
     print("Image shape:", sample_img.shape)

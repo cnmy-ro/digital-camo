@@ -1,45 +1,48 @@
-'''
-Generate channel-wise mean and std deviation of pixel values across the entire segmentation 'trainval' set
-'''
-
+"""
+Script to generate the class distribution of pixel values
+"""
+import os
 import numpy as np
+from PIL import Image
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-import PASCALData
-
-DATA_DIR = "../Data/"
-output_path = "../Data/datastats-trainval-360x240.txt"
+# from datasets.VOC12DatasetSSPerson import VOC12DatasetSSPerson
 
 
-trainval_dataset = PASCALData.VOC12Dataset(DATA_DIR, mode='trainval', normalize=False)
-trainval_loader = DataLoader(trainval_dataset, batch_size=1, shuffle=False)
+def main(label_dir):
+    
+    label_filenames = sorted(os.listdir(label_dir))
+    
+    classwise_pixel_counts = {0:0, 
+                              1:0, 2:0, 3:0, 4:0, 5:0,
+                              6:0, 7:0, 8:0, 9:0, 10:0,
+                              11:0, 12:0, 13:0, 14:0, 15:0,
+                              16:0, 17:0, 18:0, 19:0, 20:0,
+                              255:0}
 
+    person_class_id = 15
 
-# -------------------------------
-print("\nCalculating Mean ...")
-mean = np.array([0,0,0], dtype=np.float32)
-for batch in tqdm(trainval_loader):
-    img = batch['image data'].squeeze().permute(1,2,0).numpy()
-    mean += np.mean(img, axis=(0,1))
+    resize_dims = (320,256) # W x H  (for PIL)
 
-mean /= len(trainval_loader)
-print("\nChannel-wise Mean:", list(mean))
+    for lf in tqdm(label_filenames):
+        label_path = f"{label_dir}/{lf}"
+        label_mask = Image.open(label_path).resize(resize_dims, resample=Image.NEAREST)
+        label_mask = np.array(label_mask)
+        
+        unique_classes = np.unique(label_mask)
+        for class_id in unique_classes:
+            classwise_pixel_counts[class_id] += np.sum(label_mask == class_id)
+    
+    total_pixels = sum([count for count in classwise_pixel_counts.values()])
+    print("Total pixels:", total_pixels)
+    print("Classwise pixel counts:", classwise_pixel_counts)
+    print("Person class pixel count:", classwise_pixel_counts[person_class_id])
+    print("Not-person classes pixel count:", total_pixels - classwise_pixel_counts[person_class_id])
 
+    
 
-# -------------------------------
-print("\nCalculating Standard Deviation ...")
-stddev = np.array([0,0,0], dtype=np.float32)
-for batch in tqdm(trainval_loader):
-    img = batch['image data'].squeeze().permute(1,2,0).numpy()
-    sq_diff = (img - mean) ** 2
-    stddev += np.sum(sq_diff, axis=(0,1))
+if __name__ == '__main__':
 
-stddev /= img.shape[0] * img.shape[1] * len(trainval_loader) - 1
-stddev = np.sqrt(stddev)
-print("\nChannel-wise Standard Deviation:", list(stddev))
-
-
-# -------------------------------
-stats = np.stack([mean,stddev], axis=0)
-np.savetxt(output_path, stats, delimiter=',')
+    label_dir = "../../../Datasets/PASCAL_VOC12_SS_Person/SegmentationClass"
+    main(label_dir)

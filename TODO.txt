@@ -1,3 +1,5 @@
+- Improve naming scheme
+
 - Implement binary segmentation
     - Adapt the full-output model to perform binary segmentation
     - Write the dataset class for this problem

@@ -1,5 +1,5 @@
 import torch
-
+from torchvision import transforms 
 
 
 def get_label_names():
@@ -20,7 +20,6 @@ def get_label_names():
 
 
 
-
 def label2rgb(label_mask_pil):
     rgb_mask_pil = label_mask_pil.convert('RGB')
     return rgb_mask_pil
@@ -37,5 +36,4 @@ def label2onehot(label_batch_tensor):
     oh_label_batch = oh_label_batch.permute((0,3,1,2))
     
     return oh_label_batch
-
 

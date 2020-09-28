@@ -6,7 +6,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 from datasets.VOC12DatasetSSPerson import VOC12DatasetSSPerson
-from models.FCNVGG16Binary import FCNVGG16Binary
+from networks.FCNVGG16Binary import FCNVGG16Binary
 
 # import utils.datautils as datautils
 import utils.preprocessing as preprocessing
@@ -23,7 +23,7 @@ DATA_CONFIG = { 'data dir' : "../../Datasets/PASCAL_VOC12_SS_Person",
               }
 
 TRAINING_CONFIG = {'epochs': 200,
-                   'learning rate': 0.01
+                   'learning rate': 0.05
                    }
 
 CHECKPOINT_DIR = "./model_checkpoints"
@@ -99,6 +99,9 @@ def main():
     optimizer = torch.optim.Adam(fcn_model.parameters(),
                                  lr = TRAINING_CONFIG['learning rate'])
 
+    # Softmax activation
+    softmax_fn = torch.nn.Softmax(dim=1)
+
 
     # ---------------------------------------------------------
     # Training loop 
@@ -138,14 +141,14 @@ def main():
             epoch_train_loss += train_loss.item()
             
             with torch.no_grad():
-                train_iou = metrics.iou_from_tensors(pred_batch, label_batch)
+                train_iou = metrics.iou_from_tensors(softmax_fn(pred_batch), label_batch)
                 epoch_train_iou += train_iou
 
             # Back-propagation
             train_loss.backward()  # Compute gradients
             optimizer.step() # Update model parameters
 
-
+        # Store and display metrics
         epoch_train_loss /= len(train_loader)
         epoch_train_loss_list.append(epoch_train_loss)
         logger.debug(f"Train loss: {epoch_train_loss}")
@@ -153,7 +156,6 @@ def main():
         epoch_train_iou /= len(train_loader)
         epoch_train_iou_list.append(epoch_train_iou)
         logger.debug(f"Training IoU: {epoch_train_iou}")
-
 
         # Clear CUDA cache
         torch.cuda.empty_cache()
@@ -183,15 +185,12 @@ def main():
                 # Compute validation loss
                 val_loss = cross_entropy_fn(pred_batch, label_batch)
                 
-                val_iou = metrics.iou_from_tensors(pred_batch, label_batch)
+                val_iou = metrics.iou_from_tensors(softmax_fn(pred_batch), label_batch)
                 epoch_val_iou += val_iou
 
             epoch_val_loss += val_loss.item()
-
-
-        # Clear CUDA cache
-        torch.cuda.empty_cache()
-
+        
+        # Store and display metrics
         epoch_val_loss /= len(val_loader)
         epoch_val_loss_list.append(val_loss)
         logger.debug(f"Validation loss: {epoch_val_loss}")
@@ -200,8 +199,12 @@ def main():
         epoch_val_iou_list.append(epoch_val_iou)
         logger.debug(f"Validation IoU: {epoch_val_iou}")
 
-        if e % 50 == 0:  # Checkpoint every 25 epochs
+        # Checkpoint every 50 epochs
+        if e % 50 == 0: 
             torch.save(fcn_model.state_dict(), f"{CHECKPOINT_DIR}/fcnvgg16_ep{e}_iou{round(epoch_val_iou*100)}.pt")
+
+        # Clear CUDA cache
+        torch.cuda.empty_cache()
 
     # Write metrics into files
     np.savetxt(f"{OUTPUT_DIR}/training_losses.csv", np.array(epoch_train_loss_list))

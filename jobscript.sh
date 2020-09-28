@@ -3,8 +3,8 @@
 
 # Job configuration ---
 
-#SBATCH --job-name=train_pSS
-#SBATCH --output=results/personseg_test.%j.log
+#SBATCH --job-name=high_lr
+#SBATCH --output=results/high_lr.%j.log
 
 ## OpenMP settings
 #SBATCH --cpus-per-task=8

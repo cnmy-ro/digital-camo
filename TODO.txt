@@ -1,3 +1,5 @@
+- Implement data augmentation in the dataset classes
+
 - Improve naming scheme
 
 - Implement binary segmentation
